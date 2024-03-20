@@ -12,7 +12,7 @@ web interface are the result of reverse engineering. As a result you can remotel
 
 ## Prerequisites
 
-- Root shell access to your Printer as described in this guide... TBD
+- Root shell access to your Printer as described in [this guide](ROOT-ACCESS.md)
 - Linux server based on Raspberry Pi 4 or 5
   - Reachable by IPv4 from the printer
   - Port 8883 has to be opened for MQTT(S)
