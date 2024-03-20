@@ -1,4 +1,3 @@
-version: "3"
 services:
   kobra-unleashed:
     ports:
@@ -7,13 +6,13 @@ services:
       - ./certs:/app/certs
       - ./uploads:/app/uploads
     restart: always
-    image: ghcr.io/anjomro/kobra-unleashed:master
+    image: kobra-unleashed
     build:
       context: .
     environment:
       - MQTT_HOST=eclipse-mosquitto
       - MQTT_PORT=8883
-      - ROOT_URL=http://address-reachable-from-printer.com
+      - ROOT_URL=http://rpi5_static_ip:5000
     container_name: kobra-unleashed
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5000/"]
@@ -21,8 +20,8 @@ services:
       timeout: 10s
       retries: 10
     depends_on:
-        eclipse-mosquitto:
-            condition: service_started
+      eclipse-mosquitto:
+        condition: service_started
   eclipse-mosquitto:
     stdin_open: true
     tty: true

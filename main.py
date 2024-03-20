@@ -21,7 +21,8 @@ eventlet.monkey_patch(all=False, socket=True)
 
 app = Flask(__name__)
 
-ROOT_URL = os.getenv("ROOT_URL", "http://192.168.1.249:5000")
+# Use external http server URL, default here will be used only if ROOT_URL is missing
+ROOT_URL = os.getenv("ROOT_URL", "http://192.168.1.234:5000")
 # Random secret key
 app.config['SECRET'] = ''.join(random.choice(string.ascii_letters) for i in range(32))
 app.config['UPLOAD_FOLDER'] = 'uploads'
@@ -36,7 +37,6 @@ app.config['MQTT_TLS_CA_CERTS'] = os.getenv("MQTT_CA", "/app/certs/ca.pem")
 app.config['MQTT_TLS_CERTFILE'] = os.getenv("MQTT_CERT", "/app/certs/client.pem")
 app.config['MQTT_TLS_KEYFILE'] = os.getenv("MQTT_KEY", "/app/certs/client.key")
 app.config['MQTT_TLS_INSECURE'] = True
-# CORS_HOST = os.getenv("CORS_HOST", "http://127.0.0.1:5000")
 
 
 received_messages = []
@@ -89,6 +89,9 @@ class FileElement:
 class Printer:
     id: str
     name: str
+    model_id: str
+    fwver: int
+    online: bool
     state: str
     nozzle_temp: int
     target_nozzle_temp: int
@@ -100,6 +103,9 @@ class Printer:
     def __init__(self, id: str):
         self.id = id
         self.name = ""
+        self.model_id = "20021"
+        self.fwver = 0
+        self.online = False
         self.state = ""
         self.nozzle_temp = -1
         self.target_nozzle_temp = -1
@@ -109,7 +115,10 @@ class Printer:
         self.files = [[], []]
 
     def get_command_topic(self, cmd_type: str, action: str) -> str:
-        topic = f"anycubic/anycubicCloud/v1/server/printer/20021/{self.id}/{cmd_type}/{action}"
+        if self.fwver >= 310:
+            topic = f"anycubic/anycubicCloud/v1/server/printer/{self.model_id}/{self.id}/{cmd_type}"
+        else:
+            topic = f"anycubic/anycubicCloud/v1/server/printer/{self.model_id}/{self.id}/{cmd_type}/{action}"
         return topic
 
     def send_command(self, cmd_type: str, action: str, payload: dict):
@@ -129,6 +138,7 @@ class Printer:
                 "data": {
                     "task_mode": 2
                 },
+                "path": "/"
             })
 
     def print(self, filename: str, file_path: str = f"/"):
@@ -262,8 +272,30 @@ def print_message(printer: Printer, payload):
         print(f"Other print action: {action} / State: {printer.state}")
     print(f"Printjob: ------ {printer.print_job.__dict__}")
 
+def ota_message(printer: Printer, payload):
+    print(f"OTA {printer.id} printreport: {payload}")
+    action = payload["action"]
+    if action == "reportVersion":
+        version = str(payload["data"]["firmware_version"]).replace('.','')
+        try:
+            printer.fwver = int(version)
+        except:
+            print("Invalid Firmware Version")
+        print(f"Firmware Version: {printer.fwver}")
+
+def lastwill_message(printer: Printer, payload):
+    print(f"LastWill {printer.id} printreport: {payload}")
+    action = payload["action"]
+    if action == "onlineReport":
+        state = payload["state"]
+        if state=="online":
+            printer.online = True
+        else:
+            printer.online = False
+        print(f"Printer state: {state}")
 
 def parse_message(mqtt_client, userdata, message):
+    # process all incoming messages for the topic 'anycubic/#'
     topic = message.topic
     payload = message.payload.decode()
     try:
@@ -272,8 +304,11 @@ def parse_message(mqtt_client, userdata, message):
         print("Invalid JSON")
         return
     # Example topic: anycubic/anycubicCloud/v1/printer/public/20021/9347a110c5423fe412ce45533bfc10e6/tempature/report
+    topic_list = topic.split("/")
+    # Get model id from topic
+    model_id = topic_list[5]
     # Get printer id from topic
-    printer_id = topic.split("/")[6]
+    printer_id = topic_list[6]
     # Example message:
     '''
     {
@@ -291,16 +326,17 @@ def parse_message(mqtt_client, userdata, message):
         "target_nozzle_temp": 0
       }
     }
-    
     '''
-    type = topic.split("/")[-2]
-    action = topic.split("/")[-1]
+    type = topic_list[7]
+    action = topic_list[-1]    	
     # Check if printer already exists, if not create it
     this_printer: Printer = printer_list.get(printer_id, None)
     printer_updated = False
     if this_printer is None:
         this_printer = Printer(printer_id)
         this_printer.state = "free"
+        this_printer.online = True
+        this_printer.model_id = model_id
         printer_list[printer_id] = this_printer
         printer_updated = True
     # Parse message
@@ -314,14 +350,18 @@ def parse_message(mqtt_client, userdata, message):
             file_message(this_printer, payload)
         elif type == "print":
             print_message(this_printer, payload)
+        elif type == "ota":
+            ota_message(this_printer, payload)
+        elif type == "lastWill":
+            lastwill_message(this_printer, payload)
         else:
-            print(f"Unknown message type: {type}/{action}")
+            print(f"+++ Unknown message type: {type}/{action}")
     else:
-        print(f"Unknown message action: {type}/{action}; payload: {payload}")
+        print(f"+++ Unknown message action: {type}/{action}; payload: {payload}")
     if printer_updated:
         print(f"Printer {printer_id} updated to {this_printer.serialized()}")
         socketio.emit("printer_updated", {"id": printer_id, "printer": this_printer.serialized()})
-    print(f"Received message: {type}/{action}")
+    print(f"+++ Received message: {type}/{action}")
 
 
 @app.route('/')
@@ -361,6 +401,10 @@ def print_file(data):
     filename = data["file"]
     printer: Printer = printer_list.get(printer_id, None)
     if printer is None:
+        return []
+    if not printer.online:
+        return []
+    if printer.state != 'free':
         return []
     printer.print(filename)
 
@@ -428,6 +472,10 @@ def upload_file():
     printer: Printer = printer_list.get(printer_id, None)
     if printer is None:
         return 'Printer not found', 400
+    if not printer.online:
+        return 'Printer is offline', 400
+    if printer.state != 'free':
+        return 'Printer is busy', 400
     if file:
         filename = secure_filename(file.filename)
         upload_file_name = str(uuid.uuid4()) + filename
@@ -440,11 +488,11 @@ def upload_file():
 
 @app.route('/uploads/<filename>')
 def uploaded_file(filename):
-    return send_from_directory(app.config['UPLOAD_FOLDER'],
-                               filename)
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
 
 def configure_mqtt(mqtt_client, userdata, flags, rc):
+    # subscribe to receive all anycubic messages
     mqtt_client.subscribe("anycubic/#")
     print(f"##### Connected to MQTT Server {app.config['MQTT_BROKER_URL']}:{app.config['MQTT_BROKER_PORT']}")
 
