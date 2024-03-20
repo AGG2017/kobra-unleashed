@@ -14,8 +14,6 @@ Use Putty or other serial communication terminal software to connect to your USB
 
 When you start your terminal software and turn on you printer, if you cannot see anything on the serial console it's probably because you run newer firmware. You need to downgrade to firmware version 2.3.9 first before you can continue. This is due to disabling the serial console in the newer firmware versions.
 
-We have found a way to update to newest firmware and still have root access and uart enabled. A script will be developed sometime in the future.
-
 Once basic serial communication is established:
 
 1. Hold down the `s` key while powering on the printer.
