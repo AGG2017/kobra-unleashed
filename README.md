@@ -21,7 +21,7 @@ web interface are the result of reverse engineering. As a result you can remotel
 
 ## Setup the server
 
-- Prepare one SD card with the Raspbian OS 64Bit Lite as described step by step in this guide... TBD
+- Prepare one SD card with the Raspbian OS 64Bit Lite as described step by step in [this guide](RASPBIAN-OS.md)
 - Install this SD card in the Raspberry Pi, connect the power and LAN cable (optional) and turn on the power.
 - Wait until Raspberry Pi boots and from another Linux PC or from your router web interface try to find out what is its IP address.
 - One example of this process can be
