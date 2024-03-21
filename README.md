@@ -1,6 +1,6 @@
 # Kobra Unleashed
 
-This project is a step by step guide how to setup modified version of the original project Kobra Unleashed on a Raspberry Pi 4 or 5 (referred as RPI in this guide). The same can be used on almost all Debian based Linux host machines. The original project Kobra Unleashed can be found [here](https://github.com/anjomro/kobra-unleashed/)
+This project is a step by step guide how to setup modified version of the original project Kobra Unleashed on a Raspberry Pi 4, 5, or Zero 2W (referred as RPI in this guide). The same can be used on almost all Debian based Linux host machines. The original project Kobra Unleashed can be found [here](https://github.com/anjomro/kobra-unleashed/)
 
 ![](https://raw.githubusercontent.com/AGG2017/kobra-unleashed/master/img/kobra-unleashed-idle.png)
 
@@ -11,7 +11,7 @@ This web interface uses the interface of the firmware that is designed to be use
 ## Prerequisites
 
 - Root shell access to your Printer as described in [this guide](ROOT-ACCESS.md)
-- Linux server based on Raspberry Pi 4 or 5 hardware
+- Linux server based on Raspberry Pi 4, 5, or Zero 2W hardware (but NOT Zero W!)
   - Reachable by IPv4 from the printer
   - Port 8883 has to be opened for MQTT(S)
   - Another port of your choice (default to 5000) for the Web interface
@@ -153,7 +153,7 @@ cd ..
 nano docker-compose.yml
 ```
 
-Replace the line `ROOT_URL=http://rpi5_static_ip:5000` with `ROOT_URL=http://192.168.1.253:5000`, press `Ctrl-S` to save the file and then `Ctrl-X` to exit.
+Replace the line `ROOT_URL=http://rpi_static_ip:5000` with `ROOT_URL=http://192.168.1.253:5000`, press `Ctrl-S` to save the file and then `Ctrl-X` to exit.
 
 - Build the image kobra-unleashed
 

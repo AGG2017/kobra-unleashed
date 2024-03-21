@@ -10,7 +10,7 @@ This document will provide you a step by step guide how to install Raspbian OS L
 
 ![](https://raw.githubusercontent.com/AGG2017/kobra-unleashed/master/img/rpi5-1.PNG)
 
-- Select the Raspberry Pi version you want to use (4 or 5):
+- Select the Raspberry Pi version you want to use (4, 5, or 2W):
 
 ![](https://raw.githubusercontent.com/AGG2017/kobra-unleashed/master/img/rpi5-2.PNG)
 
