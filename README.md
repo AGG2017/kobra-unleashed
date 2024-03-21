@@ -1,36 +1,45 @@
 # Kobra Unleashed
 
-This project is a step by step guide how to setup modified version of the original project Kobra Unleashed on a Raspberry Pi 4 or 5. The same can be used on almost all Debian based Linux host machines. The original project Kobra Unleashed can be found [here](https://github.com/anjomro/kobra-unleashed/)
+This project is a step by step guide how to setup modified version of the original project Kobra Unleashed on a Raspberry Pi 4 or 5 (referred as RPI in this guide). The same can be used on almost all Debian based Linux host machines. The original project Kobra Unleashed can be found [here](https://github.com/anjomro/kobra-unleashed/)
 
 ![](https://raw.githubusercontent.com/AGG2017/kobra-unleashed/master/img/kobra-unleashed-idle.png)
 
 ## How does it work?
 
-This web interface uses the interface of the firmware that is designed to be used with the proprietary app of the
-manufacturer. This interface is not documented and not officially supported. All controls and information used in the
-web interface are the result of reverse engineering. As a result you can remotely upload gcode files, start printing with local or remote files, monitor the printing process, or pause/resume the print, etc.
+This web interface uses the interface of the firmware that is designed to be used with the proprietary app of the manufacturer. This interface is not documented and not officially supported. All controls and information used in the web interface are the result of reverse engineering. As a result you can remotely upload gcode files, start printing with local or remote files, monitor the printing process, or pause/resume the print, etc.
 
 ## Prerequisites
 
 - Root shell access to your Printer as described in [this guide](ROOT-ACCESS.md)
-- Linux server based on Raspberry Pi 4 or 5
+- Linux server based on Raspberry Pi 4 or 5 hardware
   - Reachable by IPv4 from the printer
   - Port 8883 has to be opened for MQTT(S)
   - Another port of your choice (default to 5000) for the Web interface
-- Linux host PC for initial setup of the Raspberry Pi (optional if you don't have a monitor and a keyboard attached to the RPI)
+- Option 1: Linux host PC for initial setup of the RPI, or
+- Option 2: A monitor and a keyboard attached to the RPI
 
 ## Setup the server
 
 - Prepare one SD card with the Raspbian OS 64Bit Lite as described step by step in [this guide](RASPBIAN-OS.md)
-- Install this SD card in the Raspberry Pi, connect the power and LAN cable (optional) and turn on the power.
-- Wait until Raspberry Pi boots and from another Linux PC or from your router web interface try to find out what is its IP address.
-- One example of this process can be
+- Install this SD card in the RPI, connect the power and LAN cable (optional) and turn on the power.
+- Wait until RPI boots and from another Linux PC or from your router web interface try to find out what is its IP address.
+  This is optional if you already have a monitor and a keyboard connected to your RPI.
+  One example of this process by using `nmap` can be:
 
 ```
 sudo apt install nmap
 ip r | grep default
+```
+
+```
   default via 192.168.1.1 dev enp4s0f0 proto dhcp metric 100
+```
+
+```
 sudo nmap -sP 192.168.1.0/24
+```
+
+```
   ...
   Nmap scan report for 192.168.1.253
   Host is up (0.012s latency).
@@ -38,16 +47,21 @@ sudo nmap -sP 192.168.1.0/24
   Nmap scan report for 192.168.1.254
   Host is up (0.012s latency).
   MAC Address: D8:3A:DD:DD:8E:82 (Unknown)
+  ...
 ```
 
-For the default via 192.168.1.1 we found by searching 192.168.1.0/24 the RPI IP 192.168.1.253 and 192.168.1.254 (LAN and Wifi IPs)
+For the `default via 192.168.1.1` we found by searching `192.168.1.0/24` the RPI IP `192.168.1.253` and `192.168.1.254` (LAN and Wifi IPs)
 
 - It is recommended to setup a static IP address of your RPI by setting its MAC in your router or in the RPI by following this guide... TBD
-- Let say we already selected to setup a static address 192.168.1.253 for the rest of the steps
+- Let say we already selected to setup a static address `192.168.1.253` for the rest of the steps
 - From your Linux host PC connect by ssh to the Raspberry Pi static IP (we assume the username is rpi5 but if different use your username)
+  This is optional if you already have a monitor and a keyboard connected to your RPI.
 
 ```
 ssh rpi5@192.168.1.253
+```
+
+```
   The authenticity of host '192.168.1.253 (192.168.1.253)' can't be established.
   ED25519 key fingerprint is SHA256:FaKHQuGNwriQU3DsgwrwEyrMmXaL0YI8ZmfzBVJ8yFg.
   This key is not known by any other names
@@ -100,6 +114,11 @@ cd certs
 
 ```
 ls
+```
+
+You can verify that all these files exist:
+
+```
   ca.key
   ca.pem
   client.csr
@@ -111,7 +130,7 @@ ls
   verification_cert.pem
 ```
 
-- Backup the AC mqtt keys
+- Backup the AC mqtt keys (replace `printer_ip` with your printer IP address)
 
 ```
 scp root@printer_ip:/user/ca.crt ac_ca.crt
@@ -119,7 +138,7 @@ scp root@printer_ip:/user/client.crt ac_client.crt
 scp root@printer_ip:/user/client.key ac_client.key
 ```
 
-- Set the custom mqtt keys
+- Set the custom mqtt keys (replace `printer_ip` with your printer IP address)
 
 ```
 scp ca.pem root@printer_ip:/user/ca.crt
@@ -127,14 +146,14 @@ scp client.pem root@printer_ip:/user/client.crt
 scp client.key root@printer_ip:/user/client.key
 ```
 
-- Edit the IP address of your Raspberry Pi server inside the file `docker-compose.yml`
+- Edit the IP address of your RPI server inside the file `docker-compose.yml`
 
 ```
 cd ..
 nano docker-compose.yml
 ```
 
-Replace the line `ROOT_URL=http://rpi5_static_ip:5000` with `ROOT_URL=http://192.168.1.253:5000`, press Ctrl-S to save the file and then Ctrl-X to exit.
+Replace the line `ROOT_URL=http://rpi5_static_ip:5000` with `ROOT_URL=http://192.168.1.253:5000`, press `Ctrl-S` to save the file and then `Ctrl-X` to exit.
 
 - Build the image kobra-unleashed
 
@@ -174,13 +193,13 @@ eclipse-mosquitto-1  | 1710946719: 	anycubic/# (QoS 0)
 eclipse-mosquitto-1  | 1710946719: kobra-unleashed-34 0 anycubic/#
 ```
 
-- Run the server permanently as a daemon. First stop the previous run with Ctrl-C and then:
+- Run the server permanently as a daemon. First stop the previous run with `Ctrl-C` and then:
 
 ```
 sudo docker compose up -d
 ```
 
-- If you need to rebuild the image (after updating sources):
+- Optional: if you later need to rebuild the image (after updating sources):
 
 ```
 docker compose down
@@ -193,6 +212,10 @@ docker compose up -d
 
 ## Setup the printer
 
-The easiest way to setup the printer in order to redirect the MQTT URL from AC cloud to your Raspberry Pi URL is by using the tools to generate a custom update. Prepare a custom update with the option `modify_mqtt` enabled. Set the mqtt address as the one of the RPI server static IP. Refer to the information how to prepare a custom update... TBD
+The easiest way to setup the printer in order to redirect the MQTT URL from AC cloud to your Raspberry Pi URL is by using the provided set of tools to generate a custom update. Prepare a custom update with the option `modify_mqtt` enabled. Set the mqtt address as the one of the RPI server static IP. Refer to the information how to prepare a custom update in [this repository](https://github.com/ultimateshadsform/Anycubic-Kobra-2-Series-Tools).
 
-It was possible to do it manually by modifying the /app/app executable but from firmware version 3.1.0 we also need to patch the security verification for the source URL and this is no longer easy to be done by editing the app.
+NOTE: It was possible to do it manually by modifying the /app/app executable but from firmware version 3.1.0 we also need to patch the security verification for the source URL and this is no longer easy to be done by editing the app.
+
+## Possible issues
+
+TODO
