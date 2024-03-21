@@ -218,4 +218,6 @@ NOTE: It was possible to do it manually by modifying the /app/app executable but
 
 ## Possible issues
 
-TODO
+1. Known file limit for upload gcode files is 50MB, tested in the worst case of Raspberry Pi Zero 2W with 512MB memory. From files larger than 60MB the server may reset the connection or to crash. Please don't use uploads of files larger than 50MB until the issue is solved.
+2. Tested to work in all versions of Raspberry Pi 4, 5, and Zero 2W. Please don't try to install it on Zero W, it will not work.
+3. Tested to work with Raspbian OS Lite 64-bit (all available versions of bullseye and bookworm). Please do not use older versions. It is not tested and may not work. We recommend to install the latest available version and in case of failure use the previous stable version.
