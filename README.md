@@ -52,7 +52,7 @@ sudo nmap -sP 192.168.1.0/24
 
 For the `default via 192.168.1.1` we found by searching `192.168.1.0/24` the RPI IP `192.168.1.253` and `192.168.1.254` (LAN and Wifi IPs)
 
-- It is recommended to setup a static IP address of your RPI by setting its MAC in your router or in the RPI by following this guide... TBD
+- It is recommended to setup a static IP address of your RPI by setting its MAC in your router or in the RPI by following [this guide](STATIC-IP.md).
 - Let say we already selected to setup a static address `192.168.1.253` for the rest of the steps
 - From your Linux host PC connect by ssh to the Raspberry Pi static IP (we assume the username is rpi5 but if different use your username)
   This is optional if you already have a monitor and a keyboard connected to your RPI.
