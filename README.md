@@ -202,10 +202,18 @@ sudo docker compose up -d
 - Optional: if you later need to rebuild the image (after updating sources):
 
 ```
-docker compose down
-docker rmi kobra-unleashed
-docker build . -t kobra-unleashed
-docker compose up -d
+sudo docker compose down
+sudo docker rmi kobra-unleashed
+sudo docker build . -t kobra-unleashed
+sudo docker compose up -d
+```
+
+or the shorter set of commands that do the same as above:
+
+```
+sudo docker compose down
+sudo docker compose build
+sudo docker compose up -d
 ```
 
 - Now the server is running and it is waiting a connection from the printer (on port 8883) or from a browser (on port 5000).
@@ -219,5 +227,6 @@ NOTE: It was possible to do it manually by modifying the /app/app executable but
 ## Possible issues
 
 1. Known file limit for upload gcode files is 50MB, tested in the worst case of Raspberry Pi Zero 2W with 512MB memory. From files larger than 60MB the server may reset the connection or to crash. Please don't use uploads of files larger than 50MB until the issue is solved.
-2. Tested to work in all versions of Raspberry Pi 4, 5, and Zero 2W. Please don't try to install it on Zero W, it will not work.
-3. Tested to work with Raspbian OS Lite 64-bit (all available versions of bullseye and bookworm). Please do not use older versions. It is not tested and may not work. We recommend to install the latest available version and in case of failure use the previous stable version.
+2. For Raspberry Pi 5, it was tested with a [300MB GCODE file](https://anycubic-1307326732.cos.ap-guangzhou.myqcloud.com/tmp/300M.gcode) and it was downloaded and started printing with success.
+3. Tested to work in all versions of Raspberry Pi 4, 5, and Zero 2W. Please don't try to install it on Zero W, it will not work.
+4. Tested to work with Raspbian OS Lite 64-bit (all available versions of bullseye and bookworm). Please do not use older versions. It is not tested and may not work. We recommend to install the latest available version and in case of failure use the previous stable version.

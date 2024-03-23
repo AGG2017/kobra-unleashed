@@ -243,6 +243,8 @@ def file_message(printer: Printer, payload):
 
 
 def print_message(printer: Printer, payload):
+    if printer is None:
+        return
     print(f"Printer {printer.id} printreport: {payload}")
     action = payload["action"]
     printer.state = payload["state"]
@@ -270,7 +272,8 @@ def print_message(printer: Printer, payload):
         printer.print_job.state = "done"
     else:
         print(f"Other print action: {action} / State: {printer.state}")
-    print(f"Printjob: ------ {printer.print_job.__dict__}")
+    #print(f"Printjob: ------ {printer.print_job.__dict__}")
+    return
 
 def ota_message(printer: Printer, payload):
     print(f"OTA {printer.id} printreport: {payload}")
