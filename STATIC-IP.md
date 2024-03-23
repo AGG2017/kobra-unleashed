@@ -14,20 +14,41 @@ A static IP address for Raspberry Pi is set up somewhat differently for each rou
 
 Raspbian OS have a DHCP client daemon (DHCPCD) that can communicate with the DHCP servers from routers. The configuration file of a DHCP client daemon allows you to change the IP address of a computer and set it up in the long term. The following instructions will assign a static IPv4 address to the Raspberry Pi.
 
-Before you begin with the assignment of a private IP address for Raspberry Pi, check whether DHCPCD is already activated using the following command:
+1. Before you begin with the assignment of a private IP address for Raspberry Pi, check whether DHCPCD is already activated using the following command:
 
 ```
 sudo service dhcpcd status
 ```
 
-In case it’s not, activate DHCPCD as follows:
+In case it’s not, and you receive error like this:
+
+```
+Unit dhcpcd.service could not be found.
+```
+
+then activate DHCPCD as follows:
 
 ```
 sudo service dhcpcd start
 sudo systemctl enable dhcpcd
 ```
 
-For the editing of the activated DHCPCDs, start by opening the configuration file /etc/dhcpcd.conf and running the following command:
+If you still get errors like these:
+
+```
+Failed to start dhcpcd.service: Unit dhcpcd.service not found.
+Failed to enable unit: Unit file dhcpcd.service does not exist.
+```
+
+then try to install it:
+
+```
+sudo apt-get install dhcpcd
+```
+
+and then start all over again from (1) to verify its status and to start/enable it if not already started/enabled.
+
+2. For editing of the activated DHCPCDs, start by opening the configuration file /etc/dhcpcd.conf and running the following command:
 
 ```
 sudo nano /etc/dhcpcd.conf
@@ -55,10 +76,12 @@ static routers=192.168.1.1
 static domain_name_servers=192.168.1.1
 ```
 
-The command lines above match the IPv4 addresses that you want to use for your Raspberry Pi, or where your router is assigned. Save the changes with ‘Ctrl + S’ and then press the enter key. Close the configuration file with ‘Ctrl + X’. Restart to adopt the newly assigned static IP address in the network:
+The command lines above match the IPv4 addresses that you want to use for your Raspberry Pi, or where your router is assigned. Save the changes with ‘Ctrl + S’ and then press the enter key. Close the configuration file with ‘Ctrl + X’.
+
+3. Restart to adopt the newly assigned static IP address in the network:
 
 ```
 sudo reboot now
 ```
 
-Now you should be able to access your Raspberry Pi by using the selected static IP address.
+4. Now you should be able to access your Raspberry Pi by using the selected static IP address.
