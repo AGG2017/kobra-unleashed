@@ -12,8 +12,7 @@ services:
     environment:
       - MQTT_HOST=eclipse-mosquitto
       - MQTT_PORT=8883
-      #- ROOT_URL=http://rpi_static_ip:5000
-      - ROOT_URL=http://192.168.1.234:5000
+      - ROOT_URL=http://rpi_static_ip:5000
     container_name: kobra-unleashed
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5000/"]
