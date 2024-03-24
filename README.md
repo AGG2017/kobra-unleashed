@@ -204,15 +204,7 @@ sudo docker compose up -d
 ```
 sudo docker compose down
 sudo docker rmi kobra-unleashed
-sudo docker build . -t kobra-unleashed
-sudo docker compose up -d
-```
-
-or the shorter set of commands that do the same as above:
-
-```
-sudo docker compose down
-sudo docker compose build
+sudo docker build . -t kobra-unleashed --no-cache
 sudo docker compose up -d
 ```
 

@@ -93,10 +93,10 @@ class Printer:
     fwver: int
     online: bool
     state: str
-    nozzle_temp: int
-    target_nozzle_temp: int
-    hotbed_temp: int
-    target_hotbed_temp: int
+    nozzle_temp: str
+    target_nozzle_temp: str
+    hotbed_temp: str
+    target_hotbed_temp: str
     print_job: Union[PrintJob, None]
     files: List[List[FileElement]]
 
@@ -106,11 +106,11 @@ class Printer:
         self.model_id = "20021"
         self.fwver = 0
         self.online = False
-        self.state = ""
-        self.nozzle_temp = -1
-        self.target_nozzle_temp = -1
-        self.hotbed_temp = -1
-        self.target_hotbed_temp = -1
+        self.state = "offline"
+        self.nozzle_temp = "---"
+        self.target_nozzle_temp = "---"
+        self.hotbed_temp = "---"
+        self.target_hotbed_temp = "---"
         self.print_job = None
         self.files = [[], []]
 
@@ -205,6 +205,7 @@ class Printer:
             "id": self.id,
             "name": self.name,
             "state": self.state,
+            "online": self.online,
             "nozzle_temp": self.nozzle_temp,
             "target_nozzle_temp": self.target_nozzle_temp,
             "hotbed_temp": self.hotbed_temp,
@@ -214,20 +215,24 @@ class Printer:
         }
 
 
-def status_message(printer: Printer, payload):
+def status_message(printer: Printer, state):
     # Update printer status
-    printer.state = payload["state"]
-    print(f"Printer {printer.id} status: {printer.state}")
+    printer.state = state
+    if state == "offline":
+        printer.nozzle_temp = "---"
+        printer.target_nozzle_temp = "---"
+        printer.hotbed_temp = "---"
+        printer.target_hotbed_temp = "---"
+        printer.files = [[], []]
 
 
 def temperature_message(printer: Printer, payload):
     # Update printer temperature
-    printer.nozzle_temp = payload["data"]["curr_nozzle_temp"]
-    printer.target_nozzle_temp = payload["data"]["target_nozzle_temp"]
-    printer.hotbed_temp = payload["data"]["curr_hotbed_temp"]
-    printer.target_hotbed_temp = payload["data"]["target_hotbed_temp"]
-    # printer.state = payload["state"]
-    print(f"Printer {printer.id} temperature: {printer.nozzle_temp}/{printer.target_nozzle_temp}°C Nozzle, "
+    printer.nozzle_temp = str(payload["data"]["curr_nozzle_temp"])
+    printer.target_nozzle_temp = str(payload["data"]["target_nozzle_temp"])
+    printer.hotbed_temp = str(payload["data"]["curr_hotbed_temp"])
+    printer.target_hotbed_temp = str(payload["data"]["target_hotbed_temp"])
+    print(f"+++ Printer {printer.id} temperature: {printer.nozzle_temp}/{printer.target_nozzle_temp}°C Nozzle, "
           f"{printer.hotbed_temp}/{printer.target_hotbed_temp}°C Hotbed")
 
 
@@ -239,15 +244,15 @@ def file_message(printer: Printer, payload):
         printer.files[int(is_local)] = records
         socketio.emit("files_updated", {"id": printer.id, "printer": printer.serialized()})
     else:
-        print(f"Other file action: {action}")
+        print(f"+++ Other file action: {action}")
 
 
 def print_message(printer: Printer, payload):
     if printer is None:
         return
-    print(f"Printer {printer.id} printreport: {payload}")
+    print(f"+++ Printer {printer.id} printreport: {payload}")
     action = payload["action"]
-    printer.state = payload["state"]
+    status_message(printer, payload["state"])
     if (action == "start" or action == "stop") and printer.state not in ["failed", "downloading", "checking"]:
         printer.print_job = PrintJob(
             payload["data"]["taskid"],
@@ -261,18 +266,17 @@ def print_message(printer: Printer, payload):
         printer.print_job.total_layers = payload["data"]["total_layers"]
         printer.print_job.curr_layer = payload["data"]["curr_layer"]
     elif action == "update":
-        printer.nozzle_temp = payload["data"]["curr_nozzle_temp"]
-        printer.target_nozzle_temp = payload["data"]["settings"]["target_nozzle_temp"]
-        printer.hotbed_temp = payload["data"]["curr_hotbed_temp"]
-        printer.target_hotbed_temp = payload["data"]["settings"]["target_hotbed_temp"]
+        printer.nozzle_temp = str(payload["data"]["curr_nozzle_temp"])
+        printer.target_nozzle_temp = str(payload["data"]["settings"]["target_nozzle_temp"])
+        printer.hotbed_temp = str(payload["data"]["curr_hotbed_temp"])
+        printer.target_hotbed_temp = str(payload["data"]["settings"]["target_hotbed_temp"])
         printer.print_job.fan_speed = payload["data"]["settings"]["fan_speed_pct"]
         printer.print_job.z_offset = payload["data"]["settings"]["z_comp"]
         printer.print_job.print_speed_mode = payload["data"]["settings"]["print_speed_mode"]
     elif action == "done":
         printer.print_job.state = "done"
     else:
-        print(f"Other print action: {action} / State: {printer.state}")
-    #print(f"Printjob: ------ {printer.print_job.__dict__}")
+        print(f"+++ Other print action: {action} / State: {printer.state}")
     return
 
 def ota_message(printer: Printer, payload):
@@ -284,7 +288,7 @@ def ota_message(printer: Printer, payload):
             printer.fwver = int(version)
         except:
             print("Invalid Firmware Version")
-        print(f"Firmware Version: {printer.fwver}")
+        print(f"+++ Firmware Version: {printer.fwver}")
 
 def lastwill_message(printer: Printer, payload):
     print(f"LastWill {printer.id} printreport: {payload}")
@@ -294,8 +298,9 @@ def lastwill_message(printer: Printer, payload):
         if state=="online":
             printer.online = True
         else:
+            status_message(printer, "offline")
             printer.online = False
-        print(f"Printer state: {state}")
+        print(f"+++ Printer state: {state}")
 
 def parse_message(mqtt_client, userdata, message):
     # process all incoming messages for the topic 'anycubic/#'
@@ -346,7 +351,7 @@ def parse_message(mqtt_client, userdata, message):
     if action == "report":
         printer_updated = True
         if type == "status":
-            status_message(this_printer, payload)
+            status_message(this_printer, payload["state"])
         elif type == "tempature":  # tempature is not a typo, it's how the API spells it
             temperature_message(this_printer, payload)
         elif type == "file":
@@ -358,9 +363,9 @@ def parse_message(mqtt_client, userdata, message):
         elif type == "lastWill":
             lastwill_message(this_printer, payload)
         else:
-            print(f"+++ Unknown message type: {type}/{action}")
+            print(f"Unknown message type: {type}/{action}")
     else:
-        print(f"+++ Unknown message action: {type}/{action}; payload: {payload}")
+        print(f"Unknown message action: {type}/{action}; payload: {payload}")
     if printer_updated:
         print(f"Printer {printer_id} updated to {this_printer.serialized()}")
         socketio.emit("printer_updated", {"id": printer_id, "printer": this_printer.serialized()})
@@ -392,6 +397,8 @@ def list_printer():
 def get_printer_files(printer_id: str, local: bool = True):
     printer: Printer = printer_list.get(printer_id, None)
     if printer is None:
+        return []
+    if not printer.online:
         return []
     printer.get_files(local)
     return printer.files[int(local)]
