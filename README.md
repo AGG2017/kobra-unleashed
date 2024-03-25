@@ -208,7 +208,30 @@ sudo docker build . -t kobra-unleashed --no-cache
 sudo docker compose up -d
 ```
 
+- Optional: update your current installation with the latest repository sources
+
+```
+sudo docker compose down
+sudo docker rmi kobra-unleashed
+git pull origin master
+sudo docker build . -t kobra-unleashed --no-cache
+sudo docker compose up -d
+```
+
 - Now the server is running and it is waiting a connection from the printer (on port 8883) or from a browser (on port 5000).
+
+- The latest tested Raspbian OS version is
+
+```
+cat /etc/os-release
+uname -a
+```
+
+```
+PRETTY_NAME="Debian GNU/Linux 12 (bookworm)"
+...
+Linux rpi5 6.6.20+rpt-rpi-2712 #1 SMP PREEMPT Debian 1:6.6.20-1+rpt1 (2024-03-07) aarch64 GNU/Linux
+```
 
 ## Setup the printer
 
