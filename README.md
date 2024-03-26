@@ -4,6 +4,17 @@ This project is a step by step guide how to setup modified version of the origin
 
 ![](https://raw.githubusercontent.com/AGG2017/kobra-unleashed/master/img/kobra-unleashed-idle.png)
 
+## How much this repository is different from the original?
+
+- Updated to work with all available Anycubic versions up to 3.1.2
+- Disable printing(or file upload to print) when the printer is busy (leveling for example) to avoid the printer lock state
+- Recognize if the printer is offline to show properly its state, remove all misleading information and disable some functions
+- Detailed instruction how to install it on Raspberry Pi 4, 5, or Zero 2W
+- Work without pre-build docker images, so it could be installed on any architecture that docker can support
+- Provided script to rebuild the container after local source code changes
+- Provided script to update from latest repository source code and rebuild the container
+- Simplified printer installation by integration as an option inside the custom update project
+
 ## How does it work?
 
 This web interface uses the interface of the firmware that is designed to be used with the proprietary app of the manufacturer. This interface is not documented and not officially supported. All controls and information used in the web interface are the result of reverse engineering. As a result you can remotely upload gcode files, start printing with local or remote files, monitor the printing process, or pause/resume the print, etc.
