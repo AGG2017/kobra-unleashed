@@ -200,6 +200,7 @@ sudo docker compose up -d
 ```
 
 - Optional: if you later need to rebuild the image (after updating sources):
+  (or you can use the script `rebuild.sh` instead)
 
 ```
 sudo docker compose down
@@ -209,6 +210,7 @@ sudo docker compose up -d
 ```
 
 - Optional: update your current installation with the latest repository sources
+  (or you can use the script `update.sh` instead)
 
 ```
 sudo docker compose down
